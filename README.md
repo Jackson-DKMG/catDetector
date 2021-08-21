@@ -17,3 +17,8 @@ A few specific Python packages for controlling the GPIO pins on the Raspberry Pi
 
 <u>However</u> : OpenCV has to be built with CUDA support otherwise the framerate will drop to ~5-7 FPS on a Ryzen 4900 with 16 cores, so... 
 This being pretty painful, I'm running the program in a docker container, with an image based on datamachines/cudnn_tensorflow_opencv (which is quite heavy with 11+ Go, it's possible to remove a lot of the stuff installed by default in the Dockerfile before building to keep the size minimal -- still over 8 Go due to the CUDA libs).
+
+**NOTE**
+
+The YOLO weights are not included here (400 Mo+). They can be downloaded from Darknet's github.
+The version I'm using is https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-p6.weights, but there are others, lighter ones at https://github.com/AlexeyAB/darknet/releases. 
