@@ -15,6 +15,9 @@ A water spray will be added later on, in an attempt to make these animals flee a
 
 A few specific Python packages for controlling the GPIO pins on the Raspberry Pi, nothing too fancy: gpiozero, numpy, OpenCV.
 
+And pigpio must be installed on the RPi. Program attempts to start the pigpiod daemon. Servos won't work without it. 
+The GPIO pins must also be set available over the network.
+
 <u>However</u> : OpenCV has to be built with CUDA support otherwise the framerate will drop to ~5-7 FPS on a Ryzen 4900 with 16 cores, so... 
 This being pretty painful, I'm running the program in a docker container, with an image based on datamachines/cudnn_tensorflow_opencv (which is quite heavy with 11+ Go, it's possible to remove a lot of the stuff installed by default in the Dockerfile before building to keep the size minimal -- still over 8 Go due to the CUDA libs).
 
