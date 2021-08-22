@@ -70,6 +70,8 @@ class Scan:
             timeout += 1
             if timeout > 4:
                 logging.critical('Raspivid failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
+                Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"]) #the pigpio daemon uses CPU permanently.
+                sleep(0.5)
                 exit(1)
 
         sleep(1)  # just to let raspivid properly start or something. The below line fails regularly otherwise.
@@ -89,6 +91,8 @@ class Scan:
             elif timeout == 4:
                 logging.critical("Streaming isn't working.\nSystem will *NOT* work. Exiting.")
                 Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall raspivid"])
+                Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"])
+                sleep(0.5)
                 exit(1)
             sleep(0.5)
             timeout += 1
@@ -234,6 +238,8 @@ class Scan:
         variables.analysis_is_running = False
         self.stream.release()
         cv2.destroyAllWindows()
+        Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"])
+        sleep(0.5)
 
         exit(0)
         ########################################################
