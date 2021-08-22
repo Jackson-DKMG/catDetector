@@ -13,7 +13,7 @@ from threading import Thread
 from time import sleep
 from gpiozero import AngularServo
 from gpiozero.pins.pigpio import PiGPIOFactory
-import numpy as np
+from numpy import arange
 import variables
 
 logging.basicConfig(filename='detector.log', filemode='w',
@@ -48,7 +48,7 @@ class PanCamera(Thread):
     def run(self):
         while True:
             if not variables.pan_servo_going_right:
-                for i in np.arange(20, 160, 20):
+                for i in arange(20, 160, 20):
                     if variables.pan_is_running:
                         if i == 40: #not sure why, servo jitters uncontrollably at 40°.
                             i = 38
@@ -59,8 +59,10 @@ class PanCamera(Thread):
                         exit(0)
                 variables.pan_servo_going_right = True
             else:
-                for i in np.arange(160, 20, -20):
+                for i in arange(160, 20, -20):
                     if variables.pan_is_running:
+                        if i == 40: #not sure why, servo jitters uncontrollably at 40°.
+                            i = 38
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         sleep(1.5)

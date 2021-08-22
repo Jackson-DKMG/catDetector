@@ -4,7 +4,8 @@ from queue import Queue  # needed to store the camera frames so as to always use
 from threading import Thread  # fill the queue in a background thread
 from time import sleep, time
 from subprocess import Popen, PIPE
-import numpy as np
+from numpy import argmax
+
 import target
 import variables
 import scanner
@@ -57,7 +58,7 @@ class Scan:
         Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall raspivid"])  # kill any stray processes
         sleep(1)
         start_raspivid_process = Popen(
-            ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 15 -rot 270 -w {self.width}\
+            ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 15 -w {self.width}\
                               -h {self.height} -awb greyworld -n -pf baseline -ih -t 0 -l -o tcp://0.0.0.0:{self.port}"])
         # 15 fps is enough. # the 'greyworld' option prevents a red tint on the image
         ### ensure raspivid is running, then kill the start_raspivid_process (after the streaming started - line 90)
@@ -153,11 +154,11 @@ class Scan:
                     for output in layer_output:
                         for detection in output:
                             score = detection[5:]
-                            confidence = float(score[np.argmax(score)])
-                            if np.argmax(score) in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]:
+                            confidence = float(score[argmax(score)])
+                            if argmax(score) in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]:
                                 # animals from the COCO classes. #TODO: remove 0 (=person) for production
                                 if confidence > 0.45:
-                                    classes_id.append(np.argmax(score))
+                                    classes_id.append(argmax(score))
                                     confidences.append(confidence)
                                     center_x = int(detection[0] * self.width)
                                     center_y = int(detection[1] * self.height)

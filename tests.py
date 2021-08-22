@@ -16,7 +16,7 @@ tilt_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_wi
                              pin_factory=factory)
 
 #print(pan_servo.angle)
-pan_servo.angle = 38
+pan_servo.angle = 90
 tilt_servo.angle = 90
 
 

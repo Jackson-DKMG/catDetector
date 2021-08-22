@@ -5,7 +5,7 @@
 ### PIGPIO is required on the remote RPI. See installation instructions at https://gpiozero.readthedocs.io/en/stable/remote_gpio.html ###
 
 from threading import Thread
-from time import sleep, time
+from time import sleep
 import scanner
 import variables
 
