@@ -1,5 +1,4 @@
-FROM nvidia/cuda:11.4.1-devel-ubuntu20.04
-
+FROM nvidia/cuda:11.4.1-runtime-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris

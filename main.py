@@ -58,7 +58,7 @@ class Scan:
         Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall raspivid"])  # kill any stray processes
         sleep(1)
         start_raspivid_process = Popen(
-            ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 15 -w {self.width}\
+            ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 30 -w {self.width}\
                               -h {self.height} -awb greyworld -n -pf baseline -ih -t 0 -l -o tcp://0.0.0.0:{self.port}"])
         # 15 fps is enough. # the 'greyworld' option prevents a red tint on the image
         ### ensure raspivid is running, then kill the start_raspivid_process (after the streaming started - line 90)
@@ -109,7 +109,7 @@ class Scan:
                 self.queue.put(img)
             except:
                 pass
-            sleep(0.0666)  # 15 fps = 1/15. To test further, but that way it should be synced with the frames coming in and save some CPU.
+            sleep(0.01)  # 15 fps = 1/15. To test further, but that way it should be synced with the frames coming in and save some CPU.
             # update : not really. Framerate is nearly halved whatever the original camera fps. Still, 15 fps is fine.
         # The 'stream_thread_is_running' flag allows the run function to wait until the stream is running and the queue populated.
 
@@ -215,10 +215,10 @@ class Scan:
                     if resume_pan_timeout == 20:  # this is less than 2 seconds, normally.
                         resume_pan_timeout = 0
                         variables.pan_is_running = True
-                        Thread(target=scanner.PanCamera().run).start()
+                        scanner.PanCamera().start()
             else:
                 # analysis was stopped because a target was detected. If the targeting is done, resume analysis.
-                sleep(0.25)
+                sleep(0.05) # need more reactivity #sleep(0.25)
                 if not variables.targeting:
                     variables.analysis_is_running = True
 

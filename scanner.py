@@ -35,6 +35,10 @@ pan_servo = AngularServo(13, min_pulse_width=0.1, max_pulse_width=0.5, frame_wid
                          max_angle=180, pin_factory=factory)
 tilt_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
                           max_angle=180, pin_factory=factory)
+
+pan_servo.angle = 120
+tilt_servo.angle = 90
+
 ########################
 
 
@@ -43,15 +47,14 @@ class PanCamera(Thread):
     def __init__(self):
         Thread.__init__(self)
         tilt_servo.angle = 90 # set tilt_servo to default horizontal position
-        variables.tilt_servo_position = 90
 
     def run(self):
         while True:
             if not variables.pan_servo_going_right:
                 for i in arange(20, 160, 20):
                     if variables.pan_is_running:
-                        if i == 40: #not sure why, servo jitters uncontrollably at 40°.
-                            i = 38
+                        #if i == 40: #not sure why, servo jitters uncontrollably at 40°.
+                        #    i = 35
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         sleep(1.5)
@@ -61,8 +64,8 @@ class PanCamera(Thread):
             else:
                 for i in arange(160, 20, -20):
                     if variables.pan_is_running:
-                        if i == 40: #not sure why, servo jitters uncontrollably at 40°.
-                            i = 38
+                        #if i == 40: #not sure why, servo jitters uncontrollably at 40°.
+                        #    i = 35
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         sleep(1.5)

@@ -2,3 +2,4 @@
 __pycache__
 detector.log
 *.weights
+tests.py

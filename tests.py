@@ -8,6 +8,8 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 import numpy as np
 #import variables
 
+
+
 factory = PiGPIOFactory(host='192.168.3.46')
 
 pan_servo = AngularServo(13, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0, max_angle=180,
