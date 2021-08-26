@@ -31,7 +31,7 @@ class Target:
         # open the electrovalve and spray water
         self.spray()
 
-        sleep(1) #make it faster #sleep(2) # wait a moment before going back to the stream analysis,
+        sleep(0.5) #make it faster #sleep(2) # wait a moment before going back to the stream analysis,
         # to avoid targeting again right away, as the servos tends to misbehave.
 
         # We're done here, let's go back to analysis.
@@ -81,4 +81,7 @@ class Target:
         # once the targeting is done, open an electrovalve linked to the water hose.
         # one second should be enough. Maybe less and resume scanning/targeting right away, for an 'aggressive' mode.
         #print('Spray:', time())
+        scanner.valve.on()
+        sleep(0.5)
+        scanner.valve.off()
         return

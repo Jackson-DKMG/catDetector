@@ -11,7 +11,7 @@ import logging
 from subprocess import Popen, PIPE
 from threading import Thread
 from time import sleep
-from gpiozero import AngularServo
+from gpiozero import AngularServo, DigitalOutputDevice
 from gpiozero.pins.pigpio import PiGPIOFactory
 from numpy import arange
 import variables
@@ -38,7 +38,10 @@ tilt_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_wi
 
 pan_servo.angle = 120
 tilt_servo.angle = 90
+### SETUP THE VALVE ###
 
+valve = DigitalOutputDevice(5, initial_value=False, pin_factory=factory)
+#valve.state = 0
 ########################
 
 
