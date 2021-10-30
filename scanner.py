@@ -11,7 +11,7 @@ import logging
 from subprocess import Popen, PIPE
 from threading import Thread
 from time import sleep
-from gpiozero import AngularServo, DigitalOutputDevice
+from gpiozero import AngularServo, OutputDevice
 from gpiozero.pins.pigpio import PiGPIOFactory
 from numpy import arange
 import variables
@@ -22,28 +22,32 @@ logging.basicConfig(filename='detector.log', filemode='w',
 ### Start the pigpio daemon on the remote RPI to allow controlling the GPIO pins remotely
 if len(Popen(["ssh", f"{variables.user}@{variables.ip}", "ps aux | grep pigpiod | grep -v grep"], stderr=PIPE,
                  stdout=PIPE).communicate()[0]) < 5:
-    Popen(["ssh", f"{variables.user}@{variables.ip}", "sudo pigpiod"])
-    sleep(0.5)
-    if len(str(Popen(["ssh", f"{variables.user}@{variables.ip}", "ps aux | grep pigpiod | grep -v grep"], stderr=PIPE,
-                     stdout=PIPE).communicate()[0])) == 0:
+    try:
+        Popen(["ssh", f"{variables.user}@{variables.ip}", "sudo pigpiod"])
+        sleep(0.5)
+        if len(str(Popen(["ssh", f"{variables.user}@{variables.ip}", "ps aux | grep pigpiod | grep -v grep"], stderr=PIPE,
+                         stdout=PIPE).communicate()[0])) == 0:
+            logging.critical('Pigpio daemon failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
+            variables.exit = True
+            exit(1)
+        ### SETUP THE SERVOS ###
+        factory = PiGPIOFactory(host=variables.ip)
+        pan_servo = AngularServo(13, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
+                                 max_angle=180, pin_factory=factory)
+        tilt_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
+                                  max_angle=180, pin_factory=factory)
+
+        pan_servo.angle = 20
+        tilt_servo.angle = 90
+        ### SETUP THE VALVE ###
+        #Note : this is actually a relay to control the electrovalve, which is powered by the mains supply.
+        valve = OutputDevice(5, initial_value=False, pin_factory=factory)
+        #valve.state = 0
+        ########################
+    except:
         logging.critical('Pigpio daemon failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
+        variables.exit = True
         exit(1)
-
-### SETUP THE SERVOS ###
-factory = PiGPIOFactory(host=variables.ip)
-pan_servo = AngularServo(13, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
-                         max_angle=180, pin_factory=factory)
-tilt_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
-                          max_angle=180, pin_factory=factory)
-
-pan_servo.angle = 120
-tilt_servo.angle = 90
-### SETUP THE VALVE ###
-
-valve = DigitalOutputDevice(5, initial_value=False, pin_factory=factory)
-#valve.state = 0
-########################
-
 
 class PanCamera(Thread):
 

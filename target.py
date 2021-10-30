@@ -70,7 +70,7 @@ class Target:
         if abs(angle) < 3: #trying to avoid the servo making constant micro adjustments
             return
         new_angle = round(variables.tilt_servo_position - angle)  #TODO : maybe mount the servo in the right position. Jackass.
-        if new_angle < 45 or new_angle > 155:
+        if new_angle < 50 or new_angle > 135:
             scanner.tilt_servo.angle = 90
             return  # probably not useful to aim too low or too high.
         scanner.tilt_servo.angle = new_angle

@@ -5,14 +5,16 @@ from threading import Thread  # fill the queue in a background thread
 from time import sleep, time
 from subprocess import Popen, PIPE
 from numpy import argmax
-
+from sys import exit as EXIT
 import target
 import variables
+
+
+
 import scanner
 
 logging.basicConfig(filename='detector.log', filemode='w',
                     format='%(asctime)s %(levelname)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S :', level=logging.DEBUG)
-
 
 class Scan:
 
@@ -43,6 +45,10 @@ class Scan:
         self.queue_thread = Thread(target=self.video_stream_to_queue, daemon=True)
         self.stream_thread_is_running = False
 
+    def exit(self):
+        variables.exit = True #to let the run() thread know that it should exit too.
+        EXIT()
+
     def start_pigpio_daemon(self):
         """Start the pigpio daemon on the remote RPI to allow controlling the GPIO pins remotely"""
         Popen(["ssh", f"{self.user}@{self.ip}", "sudo pigpiod"])
@@ -50,7 +56,7 @@ class Scan:
         if len(str(Popen(["ssh", f"{self.user}@{self.ip}", "ps aux | grep pigpiod | grep -v grep"], stderr=PIPE,
                          stdout=PIPE).communicate()[0])) == 0:
             logging.critical('Pigpio daemon failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
-            exit(1)
+            self.exit()
 
     def video_stream_to_queue(self):
         """Start the video capture on the RPI, open the video stream in OpenCV, start the queue
@@ -59,22 +65,25 @@ class Scan:
         sleep(1)
         start_raspivid_process = Popen(
             ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 30 -w {self.width}\
-                              -h {self.height} -awb greyworld -n -pf baseline -ih -t 0 -l -o tcp://0.0.0.0:{self.port}"])
-        # 15 fps is enough. # the 'greyworld' option prevents a red tint on the image
-        ### ensure raspivid is running, then kill the start_raspivid_process (after the streaming started - line 90)
-        timeout = 0
-        while not 'raspivid' in str(
-                Popen(["ssh", f"{self.user}@{self.ip}", "ps aux | grep raspivid | grep -v grep"], stderr=PIPE,
-                      stdout=PIPE).communicate()):
-            sleep(0.5)
-            timeout += 1
-            if timeout > 4:
-                logging.critical('Raspivid failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
-                Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"]) #the pigpio daemon uses CPU permanently.
-                sleep(0.5)
-                exit(1)
+                              -h {self.height} -awb greyworld -n -pf baseline -ih -t 0 -l -o tcp://0.0.0.0:{self.port}"],
+            stderr=PIPE,stdout=PIPE)         # 15 fps is enough. # the 'greyworld' option prevents a red tint on the image
 
-        sleep(1)  # just to let raspivid properly start or something. The below line fails regularly otherwise.
+        #Let raspivid start (or fail anyway)
+        sleep(0.5)
+        ### ensure raspivid is running, then kill the start_raspivid_process (after the streaming started - line 100-something)
+        timeout = 0
+        while not Popen(["ssh", f"{self.user}@{self.ip}", "ps aux | grep raspivid | grep -v grep"], stderr=PIPE,
+                      stdout=PIPE).communicate()[0].decode('UTF-8'):
+                sleep(0.5)
+                timeout += 1
+                if timeout == 3:
+                    logging.critical('Raspivid failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
+                    Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"]) #the pigpio daemon uses CPU permanently.
+                    Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall raspivid"]) #just in case
+                    sleep(0.5)
+                    self.exit()
+
+        sleep(0.5)  # just to let raspivid properly start or something. The below line fails regularly otherwise.
 
         self.stream = cv2.VideoCapture(f"tcp://{self.ip}:{self.port}")
         # stream is encoded in MJPEG instead of H264: this eliminates the need for OpenCV to decode each frame as it is natively JPEG. I think.
@@ -93,7 +102,7 @@ class Scan:
                 Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall raspivid"])
                 Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"])
                 sleep(0.5)
-                exit(1)
+                self.exit()
             sleep(0.5)
             timeout += 1
         start_raspivid_process.terminate()  # once the stream is running, we can kill the process
@@ -121,8 +130,9 @@ class Scan:
         self.queue_thread.start()
 
         while not self.stream_thread_is_running:
-            # shouldn't get into a deadlock, as the previous functions will exit(1) if any issue.
             sleep(0.25)
+            if variables.exit:
+                self.exit()
 
         ### start the pan routine
         scanner.PanCamera().start()
@@ -188,7 +198,7 @@ class Scan:
                             #print(f'Detected {self.classes[classes_id[first_index]]} {str(round(confidences[first_index], 2))}, {time()}')
                             cv2.putText(frame, self.classes[classes_id[first_index]] + " " + str(
                                 round(confidences[first_index], 2)),
-                                        (boxes[first_index][0], boxes[first_index][1] + 30), font, 2, (0, 255, 0), 3)
+                                        (x, y + 30), font, 2, (0, 255, 0), 3)
                             # display a dot at the center of the detected object.
                             cv2.circle(frame, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
                             ######################################
@@ -241,7 +251,7 @@ class Scan:
         Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"])
         sleep(0.5)
 
-        exit(0)
+        self.exit()
         ########################################################
 
 
