@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.4.1-runtime-ubuntu20.04
+FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
@@ -93,4 +93,5 @@ RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
 
 WORKDIR /catDetector
 
-CMD python3 main.py
+#CMD python3 main.py
+#can't use that anymore as the user, ip & port must be passed as parameters
