@@ -1,14 +1,18 @@
 **WORK IN PROGRESS**
 
-An animal detector, using a camera mounted on a Raspberry Pi and a couple servos.
+An animal detector and repellent, using a camera mounted on a Raspberry Pi and a couple servos.
 <br><br>
 Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO V4 model.
-The RPi has nowhere near enough processing power to handle this task - getting about 0.35 FPS. Maybe with a Coral TPU ?
-The final objective is to make a completely independent system.
+(The RPi has nowhere near enough processing power to handle this task - getting about 0.35 FPS. Maybe with a Coral TPU ?
+The final objective is to make a completely independent system.)<br>
+The pan servo continuously scans a perimeter of about 140° (it has a course of 180°, so if something is dectected on the edge of the image it can still target it.<br>
+When an object pertaining to the list of foes is detected (currently : all living creatures from the COCO dataset), the servos bring it to the center of the image, and an electrovalve is activated for 0.5s.<br>
+The valve is connected to the water hose, and a to a small diameter pipe fitted on the camera.<br>
+To handle the pressure, the valve is a 220V model, powered on the mains supply and controlled by the RPi with a relay.<br>
+<br>
+The servos are also powered externally and only controlled by the RPi.
 <br><br>
-When an object is detected, the servos bring it to the center of the image. 
-<br><br>
-A water spray will be added later on, in an attempt to make these animals flee and (especially the cats) stop using my yard as their goddamn toilet. Seriously.
+A wiring diagram is provided (yes, there are watermarks, I know).
 <br>
 
 **REQUIREMENTS**
@@ -17,10 +21,11 @@ A few specific Python packages for controlling the GPIO pins on the Raspberry Pi
 <br><br>
 And pigpio must be installed on the RPi. Program attempts to start the pigpio daemon (pigpiod). Servos won't work without it.<br>
 The GPIO pins must also be set available over the network.<br>
-<br><br>
+<br>
 <u>However</u> : OpenCV has to be built with CUDA support otherwise the framerate will drop to ~5-7 FPS on a Ryzen 4900 with 16 cores, so...<br> 
 This being pretty painful, I'm running the program in a docker container, see details below.
-<br><br>
+<br>
+
 **NOTE**
 
 The YOLO weights are not included here (400 Mo+). They can be downloaded from Darknet's github.<br>
