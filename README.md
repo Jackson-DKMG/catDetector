@@ -43,3 +43,6 @@ The dockerfile installs all the dependencies. In the same folder, there must be 
     -the folder with all the program files
 
 The dockerfile ARG variables should be modified as necessary. 
+
+If using Docker, the container can be run as follows (to display the video on the host):<br>
+<code>xhost + && docker run --name=catDetector --gpus all --rm -it --net=host --ipc=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix cat_detector:v3 python3 main.py USER IP PORT</code>
