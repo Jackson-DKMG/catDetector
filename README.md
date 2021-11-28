@@ -1,6 +1,6 @@
 **WORK IN PROGRESS**
 
-An animal detector and repellent, using a camera mounted on a Raspberry Pi and a couple servos.
+An animal detector and repellent, using a camera mounted on a Raspberry Pi Zero W and a couple servos.
 <br><br>
 Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO V4 model.
 (The RPi has nowhere near enough processing power to handle this task - getting about 0.35 FPS. Maybe with a Coral TPU ?
@@ -13,7 +13,8 @@ To handle the pressure, the valve is a 220V model, powered on the mains supply a
 The servos are also powered externally and only controlled by the RPi.
 <br><br>
 A wiring diagram is provided (yes, made with Paint).
-<br>
+<br><br>
+The RPi Zero may not be the best choice however. It seems to have some difficulties handling the streaming + servos control. Will try to find a RPi3 instead.
 
 **REQUIREMENTS**
 
@@ -41,14 +42,9 @@ The dockerfile installs all the dependencies. In the same folder, there must be 
         cuDNN Runtime Library for Ubuntu20.04 x86_64 (Deb)<br>
         cuDNN Developer Library for Ubuntu20.04 x86_64 (Deb)<br>
     -a ssh folder containing an id_rsa and known_hosts for ssh'ing into the RPi without a prompt.<br>
-    -the folder with all the program files
+    -the program files.
 
 The dockerfile ARG variables should be modified as necessary. 
 
 If using Docker, the container can be run as follows (to display the video on the host):<br>
-<<<<<<< HEAD
 <code>xhost + && docker run --name=catDetector --gpus all --rm -it --net=host --ipc=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix cat_detector:v3 python3 main.py USER IP PORT --preview on/off (default off)</code>
-=======
-<code>xhost + && docker run --name=catDetector --gpus all --rm --net=host --ipc=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix cat_detector:v3 python3 main.py USER IP PORT</code>
-
->>>>>>> 71062ca0b4aa54601325b27732404d170142fdc0
