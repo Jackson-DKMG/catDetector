@@ -26,7 +26,12 @@ RUN apt update && apt upgrade -y &&\
         && rm -rf /var/lib/apt/lists/*
 #install CUDNN, copy ssh key and known_hosts, copy the program files.
 ADD ssh /root/.ssh
-ADD catDetector /catDetector
+ADD data /catDetector/data
+COPY main.py /catDetector/main.py
+COPY scanner.py /catDetector/scanner.py
+COPY target.py /catDetector/target.py
+COPY variables.py /catDetector/variables.py
+
 COPY $LIBCUDNN /$LIBCUDNN
 COPY $LIBCUDNNDEV /$LIBCUDNNDEV
 RUN dpkg -i $LIBCUDNN

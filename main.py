@@ -9,8 +9,6 @@ from sys import exit as EXIT
 import target
 import variables
 
-
-
 import scanner
 
 logging.basicConfig(filename='detector.log', filemode='w',
@@ -64,7 +62,7 @@ class Scan:
         Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall raspivid"])  # kill any stray processes
         sleep(1)
         start_raspivid_process = Popen(
-            ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 30 -w {self.width}\
+            ["ssh", f"{self.user}@{self.ip}", f"raspivid  --codec MJPEG -fps 15 -w {self.width}\
                               -h {self.height} -awb greyworld -n -pf baseline -ih -t 0 -l -o tcp://0.0.0.0:{self.port}"],
             stderr=PIPE,stdout=PIPE)         # 15 fps is enough. # the 'greyworld' option prevents a red tint on the image
 
@@ -120,6 +118,7 @@ class Scan:
                 pass
             sleep(0.01)  # 15 fps = 1/15. To test further, but that way it should be synced with the frames coming in and save some CPU.
             # update : not really. Framerate is nearly halved whatever the original camera fps. Still, 15 fps is fine.
+            # update 2 : now the framerate remains nearly identical to the original one (14.97 FPS on the processed frames)
         # The 'stream_thread_is_running' flag allows the run function to wait until the stream is running and the queue populated.
 
     def run(self):
@@ -194,13 +193,12 @@ class Scan:
                             x = int(boxes[first_index][0] + boxes[first_index][2] / 2)
                             y = int(boxes[first_index][1] + boxes[first_index][3] / 2)
 
-                            #TODO: remove below block for production ########
-                            #print(f'Detected {self.classes[classes_id[first_index]]} {str(round(confidences[first_index], 2))}, {time()}')
-                            cv2.putText(frame, self.classes[classes_id[first_index]] + " " + str(
-                                round(confidences[first_index], 2)),
-                                        (x, y + 30), font, 2, (0, 255, 0), 3)
-                            # display a dot at the center of the detected object.
-                            cv2.circle(frame, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+                            if variables.preview == 'on': #below block not executed if the live video isn't displayed
+                                cv2.putText(frame, self.classes[classes_id[first_index]] + " " + str(
+                                    round(confidences[first_index], 2)),
+                                            (x, y + 30), font, 2, (0, 255, 0), 3)
+                                # display a dot at the center of the detected object.
+                                cv2.circle(frame, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
                             ######################################
                             variables.pan_is_running = False  # stop the pan routine and break the analysis loop,
                             variables.analysis_is_running = False  # as something was detected.
@@ -233,15 +231,15 @@ class Scan:
                     variables.analysis_is_running = True
 
 
-        #TODO: remove below block for production ########
-            elapsed_time = time() - starting_time
-            fps = frame_id / elapsed_time
-            cv2.putText(frame, "FPS: " + str(round(fps, 2)), (10, 50), font, 2, (0, 0, 0), 3)
-            cv2.imshow("Image", frame)  # display the video stream and detected objects.
+            if variables.preview == 'on':
+                elapsed_time = time() - starting_time
+                fps = frame_id / elapsed_time
+                cv2.putText(frame, "FPS: " + str(round(fps, 2)), (10, 50), font, 2, (0, 0, 0), 3)
+                cv2.imshow("Image", frame)  # display the video stream and detected objects.
 
-            key = cv2.waitKey(1)
-            if key == 27:
-                break
+                key = cv2.waitKey(1)
+                if key == 27:
+                    break
 
         self.stream_thread_is_running = False
         variables.pan_is_running = False

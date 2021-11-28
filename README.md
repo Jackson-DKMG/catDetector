@@ -5,14 +5,14 @@ An animal detector and repellent, using a camera mounted on a Raspberry Pi and a
 Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO V4 model.
 (The RPi has nowhere near enough processing power to handle this task - getting about 0.35 FPS. Maybe with a Coral TPU ?
 The final objective is to make a completely independent system.)<br>
-The pan servo continuously scans a perimeter of about 140° (it has a course of 180°, so if something is dectected on the edge of the image it can still target it.<br>
+The pan servo continuously scans a perimeter of about 140° (it has a course of 180°, so if something is detected on the edge of the image it can still target it.<br>
 When an object pertaining to the list of foes is detected (currently : all living creatures from the COCO dataset), the servos bring it to the center of the image, and an electrovalve is activated for 0.5s.<br>
 The valve is connected to the water hose, and a to a small diameter pipe fitted on the camera.<br>
-To handle the pressure, the valve is a 220V model, powered on the mains supply and controlled by the RPi with a relay.<br>
+To handle the pressure, the valve is a 220V model, powered on the mains supply and controlled by the RPi with a relay and a transistor.<br>
 <br>
 The servos are also powered externally and only controlled by the RPi.
 <br><br>
-A wiring diagram is provided (yes, there are watermarks, I know).
+A wiring diagram is provided (yes, made with Paint).
 <br>
 
 **REQUIREMENTS**
@@ -21,7 +21,8 @@ A few specific Python packages for controlling the GPIO pins on the Raspberry Pi
 <br><br>
 And pigpio must be installed on the RPi. Program attempts to start the pigpio daemon (pigpiod). Servos won't work without it.<br>
 The GPIO pins must also be set available over the network.<br>
-<br>
+Run with <code>python3 main.py USER IP PORT --preview on/off</code> (<code>preview</code> is optional and default to off. If off, the live video isn't displayed)
+<br><br>
 <u>However</u> : OpenCV has to be built with CUDA support otherwise the framerate will drop to ~5-7 FPS on a Ryzen 4900 with 16 cores, so...<br> 
 This being pretty painful, I'm running the program in a docker container, see details below.
 <br>
@@ -45,4 +46,4 @@ The dockerfile installs all the dependencies. In the same folder, there must be 
 The dockerfile ARG variables should be modified as necessary. 
 
 If using Docker, the container can be run as follows (to display the video on the host):<br>
-<code>xhost + && docker run --name=catDetector --gpus all --rm -it --net=host --ipc=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix cat_detector:v3 python3 main.py USER IP PORT</code>
+<code>xhost + && docker run --name=catDetector --gpus all --rm -it --net=host --ipc=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix cat_detector:v3 python3 main.py USER IP PORT --preview on/off (default off)</code>

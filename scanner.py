@@ -20,34 +20,37 @@ logging.basicConfig(filename='detector.log', filemode='w',
                     format='%(asctime)s %(levelname)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S :', level=logging.DEBUG)
 
 ### Start the pigpio daemon on the remote RPI to allow controlling the GPIO pins remotely
+
 if len(Popen(["ssh", f"{variables.user}@{variables.ip}", "ps aux | grep pigpiod | grep -v grep"], stderr=PIPE,
                  stdout=PIPE).communicate()[0]) < 5:
     try:
         Popen(["ssh", f"{variables.user}@{variables.ip}", "sudo pigpiod"])
-        sleep(0.5)
+        sleep(1)
         if len(str(Popen(["ssh", f"{variables.user}@{variables.ip}", "ps aux | grep pigpiod | grep -v grep"], stderr=PIPE,
                          stdout=PIPE).communicate()[0])) == 0:
             logging.critical('Pigpio daemon failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
             variables.exit = True
             exit(1)
-        ### SETUP THE SERVOS ###
-        factory = PiGPIOFactory(host=variables.ip)
-        pan_servo = AngularServo(13, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
-                                 max_angle=180, pin_factory=factory)
-        tilt_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
-                                  max_angle=180, pin_factory=factory)
-
-        pan_servo.angle = 20
-        tilt_servo.angle = 90
-        ### SETUP THE VALVE ###
-        #Note : this is actually a relay to control the electrovalve, which is powered by the mains supply.
-        valve = OutputDevice(5, initial_value=False, pin_factory=factory)
-        #valve.state = 0
-        ########################
-    except:
+    except Exception as e:
+        print(str(e))
         logging.critical('Pigpio daemon failed to start on the remote raspberry.\nSystem will *NOT* work. Exiting.')
         variables.exit = True
         exit(1)
+### SETUP THE SERVOS ###
+factory = PiGPIOFactory(host=variables.ip)
+pan_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
+                         max_angle=180, pin_factory=factory)
+tilt_servo = AngularServo(12, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
+                          max_angle=180, pin_factory=factory)
+### SETUP THE VALVE ###
+#Note : this is actually a transistor, to control a relay, to control the electrovalve, which is powered by the mains supply.
+#the relay is powered by the 5V supply that also powers the servos. 
+valve = OutputDevice(23, initial_value=False, pin_factory=factory)
+#valve.state = 0
+########################
+
+pan_servo.angle = 20
+tilt_servo.angle = 90
 
 class PanCamera(Thread):
 
@@ -64,7 +67,8 @@ class PanCamera(Thread):
                         #    i = 35
                         pan_servo.angle = i
                         variables.pan_servo_position = i
-                        sleep(1.5)
+                        #print(pan_servo.angle)
+                        sleep(2)
                     else:
                         exit(0)
                 variables.pan_servo_going_right = True
@@ -75,7 +79,8 @@ class PanCamera(Thread):
                         #    i = 35
                         pan_servo.angle = i
                         variables.pan_servo_position = i
-                        sleep(1.5)
+                        #print(pan_servo.angle)
+                        sleep(2)
                     else:
                         exit(0)
                 variables.pan_servo_going_right = False
