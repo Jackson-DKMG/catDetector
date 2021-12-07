@@ -68,7 +68,7 @@ class PanCamera(Thread):
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         #print(pan_servo.angle)
-                        sleep(2)
+                        sleep(1.5)
                     else:
                         exit(0)
                 variables.pan_servo_going_right = True
@@ -80,7 +80,7 @@ class PanCamera(Thread):
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         #print(pan_servo.angle)
-                        sleep(2)
+                        sleep(1.5)
                     else:
                         exit(0)
                 variables.pan_servo_going_right = False

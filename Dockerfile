@@ -3,7 +3,7 @@ FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
 
-ARG OPENCV_VERSION=4.5.3
+ARG OPENCV_VERSION=4.5.4
 ARG CUDA_COMPUTE_CAPABILITY=7.5
 ARG LIBCUDNN=libcudnn8_8.2.2.26-1+cuda11.4_amd64.deb
 ARG LIBCUDNNDEV=libcudnn8-dev_8.2.2.26-1+cuda11.4_amd64.deb
@@ -31,6 +31,7 @@ COPY main.py /catDetector/main.py
 COPY scanner.py /catDetector/scanner.py
 COPY target.py /catDetector/target.py
 COPY variables.py /catDetector/variables.py
+COPY download_yolov5.py /catDetector/download_yolov5.py
 
 COPY $LIBCUDNN /$LIBCUDNN
 COPY $LIBCUDNNDEV /$LIBCUDNNDEV
@@ -38,9 +39,10 @@ RUN dpkg -i $LIBCUDNN
 RUN dpkg -i $LIBCUDNNDEV
 RUN rm $LIBCUDNN $LIBCUDNNDEV
 
-
 #install needed python modules
-RUN pip3 install gpiozero pigpio
+RUN pip3 install gpiozero pigpio torch
+#download the YoloV5 model
+RUN python3 /catDetector/download_yolov5.py
 
 #download & unzip opencv and opencv-contrib, then delete the archives.
 RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
@@ -88,7 +90,7 @@ RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
           -D BUILD_EXAMPLES=OFF \
           -D BUILD_TESTS=OFF \
           -D BUILD_DOCS=OFF .. &&\
-    # Make
+    # Make using all available cpu cores.
     make -j"$(nproc)" && \
     # Install to /usr/local/lib
     make install && \

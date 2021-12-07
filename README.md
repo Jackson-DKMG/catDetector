@@ -1,8 +1,13 @@
-**WORK IN PROGRESS**
-
+**PRODUCTION READY**
 An animal detector and repellent, using a camera mounted on a Raspberry Pi Zero W and a couple servos.
 <br><br>
-Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO V4 model.
+***UPDATE DECEMBER 7***
+Switched to Pytorch and YOLOV5, which has a better performance and is a lot easier to configure.<br>
+OpenCV is now only required if the video is displayed (which makes it somewhat overkill to build it with CUDA support...)<br>
+***END UPDATE***
+
+**DESCRIPTION**
+Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO model.
 (The RPi has nowhere near enough processing power to handle this task - getting about 0.35 FPS. Maybe with a Coral TPU ?
 The final objective is to make a completely independent system.)<br>
 The pan servo continuously scans a perimeter of about 140° (it has a course of 180°, so if something is detected on the edge of the image it can still target it.<br>
@@ -32,6 +37,8 @@ This being pretty painful, I'm running the program in a docker container, see de
 
 The YOLO weights are not included here (400 Mo+). They can be downloaded from Darknet's github.<br>
 The version I'm using is https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-p6.weights, but there are others, lighter ones at https://github.com/AlexeyAB/darknet/releases. 
+
+UPDATE: model is yolov5x6. If using the docker version, the model is downloaded when building the image.
 
 **DOCKERFILE**
 

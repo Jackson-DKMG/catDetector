@@ -1,14 +1,11 @@
 import logging
-if variables.preview == 'on': #don't need OpenCV otherwise
-    import cv2
-import torch
+import cv2
 from queue import Queue  # needed to store the camera frames so as to always use the latest one
 from threading import Thread  # fill the queue in a background thread
 from time import sleep, time
 from subprocess import Popen, PIPE
 from numpy import argmax
 from sys import exit as EXIT
-from os import chdir
 import target
 import variables
 
@@ -21,13 +18,16 @@ class Scan:
 
     def __init__(self):
         # instantiate the model
-        chdir('data')
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5x6', pretrained=True) #already downloaded when building the docker image.
-        #otherwise, going to take some time, it's 269Mo.
-        #self.model.eval()
-        with open('coco.names', 'rt') as f:
+        self.model = cv2.dnn.readNet('data/yolov4.weights', 'data/yolov4.cfg')
+        #TODO: remove below block for production ########
+        # just to get names for detected objects.
+        with open('data/coco.names', 'rt') as f:
             self.classes = f.read().rstrip('\n').split('\n')
-        # set camera resolution.
+        ######################################
+        # use the gpu
+        self.model.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        self.model.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
+        # set camera resolution # square, otherwise the image is resized and the shapes would be flattened, probably affecting the detection rate.
         self.width = variables.width
         self.height = variables.height
         # SSH user and camera IP
@@ -155,40 +155,69 @@ class Scan:
             if variables.analysis_is_running:
                 try:
                     ### run each frame through the model.
-                    results = self.model(frame) #a tensor with all the detected objects as arrays (coords, class)
-                    ###filter the objects pertaining to the relevant COCO classes (living stuff) and select the target with highest confidence
-                    #TODO: remove class 0 ('person') for production
-                    #print(results.xywh[0])
-                    targets = [i for i in results.xywh[0]if i[5] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
+                    blob = cv2.dnn.blobFromImage(frame, 1 / 255, (320, 320), (0, 0, 0), swapRB=True, crop=False)
+                    self.model.setInput(blob)
+                    output_layers = self.model.getUnconnectedOutLayersNames()
+                    layer_output = self.model.forward(output_layers)
 
-                    #If nothing is detected, the above gives an empty list. No exception is raised.
-                    if targets:
-                        main_target = targets[0] #results are already ordered by decreasing confidence. Index 0 is always the right one
-                        #get center coordinates
-                        x,y = round(main_target[0].item()), round(main_target[1].item())
+                    classes_id = []  # store the detected classes
+                    confidences = []  # store the corresponding confidence levels
+                    boxes = []  # store the bounding boxes coordinates
 
-                        if variables.preview == 'on': #below block not executed if the live video isn't displayed
-                            cv2.putText(frame, self.classes[int(main_target[5].item())] + " " + str(round(main_target[4].item(), 2)),
-                                        (x,y + 30), font, 2, (0, 255, 0), 3)
-                            # display a dot at the center of the detected object.
-                            cv2.circle(frame, (x,y), radius=5, color=(0, 0, 255), thickness=-1)
+                    for output in layer_output:
+                        for detection in output:
+                            score = detection[5:]
+                            confidence = float(score[argmax(score)])
+                            if argmax(score) in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]:
+                                # animals from the COCO classes. #TODO: remove 0 (=person) for production
+                                if confidence > 0.45:
+                                    classes_id.append(argmax(score))
+                                    confidences.append(confidence)
+                                    center_x = int(detection[0] * self.width)
+                                    center_y = int(detection[1] * self.height)
+                                    w = int(detection[2] * self.width)
+                                    h = int(detection[3] * self.height)
+                                    # Rectangle coordinates
+                                    x = int(center_x - w / 2)
+                                    y = int(center_y - h / 2)
+                                    boxes.append([x, y, w, h])
+
+                    for _ in range(len(classes_id)):
+                        if variables.analysis_is_running:  # this should avoid the target thread being fired up multiple times.
+                            indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0)
+                            ### nmsthreshold at 0 so that all overlapping boxes are merged into one.
+                            first_index = indices[0][0]
+                            # indices may be an empty tuple. Not sure why, the NMS fails somehow ? Exception is caught below.
+
+                            ### coordinates of the center of the box. This will be the target.
+                            x = int(boxes[first_index][0] + boxes[first_index][2] / 2)
+                            y = int(boxes[first_index][1] + boxes[first_index][3] / 2)
+
+                            if variables.preview == 'on': #below block not executed if the live video isn't displayed
+                                cv2.putText(frame, self.classes[classes_id[first_index]] + " " + str(
+                                    round(confidences[first_index], 2)),
+                                            (x, y + 30), font, 2, (0, 255, 0), 3)
+                                # display a dot at the center of the detected object.
+                                cv2.circle(frame, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
                             ######################################
-                        variables.pan_is_running = False  # stop the pan routine and break the analysis loop,
-                        variables.analysis_is_running = False  # as something was detected.
-                        resume_pan_timeout = 0 # if the value started increasing after the previous targeting, reset it.
-                        ### start the targeting function.
-                        Thread(target=target.Target(x,y).run).start()
-                        #break  # can't target multiple objects at once, so.
+                            variables.pan_is_running = False  # stop the pan routine and break the analysis loop,
+                            variables.analysis_is_running = False  # as something was detected.
+                            resume_pan_timeout = 0 # if the value started increasing after the previous targeting, reset it.
+                            ### start the targeting function.
+                            Thread(target=target.Target(x, y).run).start()
+                            break  # can't target multiple objects at once, so.
+                        else:
+                            break  # targeting in progress, break out of the loop
 
-                except KeyboardInterrupt:
-                    break
+                except IndexError:  # when the indices variable is an empty tuple.
+                    pass
 
                 except Exception as e:  # whatever the exception may be. Just log it and try to continue the program.
                     logging.critical(f"Error: {str(e)}")
                     pass
 
-            # pan routine was stopped when detecting a target. Resume it after a few frames being analyzed at the
-            # same location, as the previous object might still be there.
+                # pan routine was stopped when detecting a target. Resume it after a few frames being analyzed at the
+                # same location, as the previous object might still be there.
                 if not variables.pan_is_running:
                     resume_pan_timeout += 1
                     if resume_pan_timeout == 20:  # this is less than 2 seconds, normally.
@@ -200,6 +229,7 @@ class Scan:
                 sleep(0.05) # need more reactivity #sleep(0.25)
                 if not variables.targeting:
                     variables.analysis_is_running = True
+
 
             if variables.preview == 'on':
                 elapsed_time = time() - starting_time
@@ -215,13 +245,13 @@ class Scan:
         variables.pan_is_running = False
         variables.analysis_is_running = False
         self.stream.release()
-        if variables.preview == 'on':
-            cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
         Popen(["ssh", f"{self.user}@{self.ip}", "sudo killall pigpiod"])
         sleep(0.5)
 
         self.exit()
         ########################################################
+
 
 if __name__ == '__main__':
     Scan().run()

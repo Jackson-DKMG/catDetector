@@ -2,6 +2,7 @@
 __pycache__
 detector.log
 *.weights
+*.pt
 tests.py
 ssh/*
 libcudnn8-dev_8.2.2.26-1+cuda11.4_amd64.deb
