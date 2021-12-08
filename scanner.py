@@ -63,8 +63,6 @@ class PanCamera(Thread):
             if not variables.pan_servo_going_right:
                 for i in arange(20, 160, 20):
                     if variables.pan_is_running:
-                        #if i == 40: #not sure why, servo jitters uncontrollably at 40°.
-                        #    i = 35
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         #print(pan_servo.angle)
@@ -75,8 +73,6 @@ class PanCamera(Thread):
             else:
                 for i in arange(160, 20, -20):
                     if variables.pan_is_running:
-                        #if i == 40: #not sure why, servo jitters uncontrollably at 40°.
-                        #    i = 35
                         pan_servo.angle = i
                         variables.pan_servo_position = i
                         #print(pan_servo.angle)

@@ -8,6 +8,7 @@ from threading import Thread
 from time import sleep
 import scanner
 import variables
+from math import isclose
 
 
 class Target:
@@ -17,16 +18,16 @@ class Target:
         variables.targeting = True
         self.x = x
         self.y = y
+        self.pan_done = False
+        self.tilt_done = False
 
     def run(self):
 
-        pan = Thread(target=self.pan(self.x))  # using threads *should* allow to move both servos simultaneously
-        pan.start()
-        tilt = Thread(target=self.tilt(self.y)) #yes, the thread spawns other threads. Incepthreads.
-        tilt.start()
+        Thread(target=self.pan, args=(self.x,)).start()
+        Thread(target=self.tilt, args=(self.y,)).start()
 
-        while pan.is_alive() and tilt.is_alive():
-            sleep(0.001)  # wait for the servos to be aligned TODO: this is probably the wrong way to do it.
+        while not (self.pan_done and self.tilt_done): #this should ensure that the servos are properly aligned before firing.
+            sleep(0.001)
 
         # open the electrovalve and spray water
         self.spray()
@@ -56,7 +57,10 @@ class Target:
             scanner.pan_servo.angle = 90
             return  # don't try to rotate the servo out of range
         scanner.pan_servo.angle = new_angle
+        while not isclose(scanner.pan_servo.angle, new_angle, abs_tol=1):
+            sleep(0.001)
         variables.pan_servo_position = scanner.pan_servo.angle  # store the new position of the servo
+        self.pan_done = True
         return
 
     def tilt(self, y):
@@ -70,11 +74,14 @@ class Target:
         #if abs(angle) < 3: #trying to avoid the servo making constant micro adjustments
         #    return
         new_angle = round(variables.tilt_servo_position - angle)  #TODO : maybe mount the servo in the right position. Jackass.
-        if new_angle < 50 or new_angle > 135:
+        if new_angle < 30 or new_angle > 135:
             scanner.tilt_servo.angle = 90
             return  # probably not useful to aim too low or too high.
         scanner.tilt_servo.angle = new_angle
+        while not isclose(scanner.tilt_servo.angle, new_angle, abs_tol=1):
+            sleep(0.001)
         variables.tilt_servo_position = scanner.tilt_servo.angle  # store the new position of the servo
+        self.tilt_done = True
         return
 
     def spray(self):
@@ -84,5 +91,5 @@ class Target:
         scanner.valve.on()
         sleep(0.5)
         scanner.valve.off()
-        #sleep(3)
+        #sleep(0.5)
         return

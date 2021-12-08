@@ -1,6 +1,5 @@
 import logging
-if variables.preview == 'on': #don't need OpenCV otherwise
-    import cv2
+import cv2
 import torch
 from queue import Queue  # needed to store the camera frames so as to always use the latest one
 from threading import Thread  # fill the queue in a background thread
@@ -11,7 +10,6 @@ from sys import exit as EXIT
 from os import chdir
 import target
 import variables
-
 import scanner
 
 logging.basicConfig(filename='detector.log', filemode='w',
@@ -177,6 +175,8 @@ class Scan:
                         variables.analysis_is_running = False  # as something was detected.
                         resume_pan_timeout = 0 # if the value started increasing after the previous targeting, reset it.
                         ### start the targeting function.
+                        variables.tilt_servo_position = scanner.tilt_servo.angle
+                        variables.pan_servo_position = scanner.pan_servo.angle
                         Thread(target=target.Target(x,y).run).start()
                         #break  # can't target multiple objects at once, so.
 
@@ -214,6 +214,9 @@ class Scan:
         self.stream_thread_is_running = False
         variables.pan_is_running = False
         variables.analysis_is_running = False
+        scanner.valve.off()
+        scanner.pan_servo.angle = 90
+        scanner.tilt_servo.angle = 90
         self.stream.release()
         if variables.preview == 'on':
             cv2.destroyAllWindows()
