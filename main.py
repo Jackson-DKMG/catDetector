@@ -21,6 +21,7 @@ class Scan:
         # instantiate the model
         chdir('data')
         self.model = torch.hub.load('ultralytics/yolov5', 'yolov5x6', pretrained=True) #already downloaded when building the docker image.
+        self.model.conf = 0.70
         #otherwise, going to take some time, it's 269Mo.
         #self.model.eval()
         with open('coco.names', 'rt') as f:
@@ -162,6 +163,7 @@ class Scan:
                     #If nothing is detected, the above gives an empty list. No exception is raised.
                     if targets:
                         main_target = targets[0] #results are already ordered by decreasing confidence. Index 0 is always the right one
+                        #print(self.classes[int(main_target[5].item())], str(round(main_target[4].item(), 2)))
                         #get center coordinates
                         x,y = round(main_target[0].item()), round(main_target[1].item())
 
@@ -179,6 +181,9 @@ class Scan:
                         variables.pan_servo_position = scanner.pan_servo.angle
                         Thread(target=target.Target(x,y).run).start()
                         #break  # can't target multiple objects at once, so.
+
+                    else:
+                        variables.target_detected = False
 
                 except KeyboardInterrupt:
                     break

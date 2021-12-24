@@ -3,7 +3,8 @@ An animal detector and repellent, using a camera mounted on a Raspberry Pi Zero 
 <br><br>
 ***UPDATE DECEMBER 7***
 Switched to Pytorch and YOLOV5, which has a better performance and is a lot easier to configure.<br>
-OpenCV is now only required if the video is displayed (which makes it somewhat overkill to build it with CUDA support...)<br>
+The video can be displayed or not via a command line argument.<br>
+Due to the new python packages required, the image size is 12-13G now.<br>
 ***END UPDATE***
 
 **DESCRIPTION**

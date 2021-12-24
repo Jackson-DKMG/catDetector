@@ -10,6 +10,7 @@ args = parser.parse_args()
 
 analysis_is_running = False
 pan_is_running = True
+target_detected = False #switch to True if a target is detected, only then activate the water spray. Avoid false positives.
 targeting = False
 pan_servo_position = 40 #initial pan servo position
 tilt_servo_position = 90 #default tilt servo position (horizontal)

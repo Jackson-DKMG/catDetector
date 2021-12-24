@@ -26,7 +26,8 @@ RUN apt update && apt upgrade -y &&\
         && rm -rf /var/lib/apt/lists/*
 #install CUDNN, copy ssh key and known_hosts, copy the program files.
 ADD ssh /root/.ssh
-ADD data /catDetector/data
+#ADD data /catDetector/data
+COPY data/coco.names /catDetector/data/coco.names
 COPY main.py /catDetector/main.py
 COPY scanner.py /catDetector/scanner.py
 COPY target.py /catDetector/target.py
@@ -39,10 +40,9 @@ RUN dpkg -i $LIBCUDNN
 RUN dpkg -i $LIBCUDNNDEV
 RUN rm $LIBCUDNN $LIBCUDNNDEV
 
-#install needed python modules
-RUN pip3 install gpiozero pigpio torch
-#download the YoloV5 model
-RUN python3 /catDetector/download_yolov5.py
+#install needed python modules and dependencies
+RUN pip3 install --upgrade pip
+RUN pip3 install --upgrade numpy gpiozero pigpio pandas seaborn torch matplotlib Pillow PyYAML requests scipy torchvision tqdm tensorboard thop
 
 #download & unzip opencv and opencv-contrib, then delete the archives.
 RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
@@ -97,6 +97,13 @@ RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
     ldconfig &&\
     # Remove OpenCV sources and build folder
     cd / && rm -rf opencv-${OPENCV_VERSION} && rm -rf opencv_contrib-${OPENCV_VERSION}
+
+#download the YoloV5 model
+RUN python3 /catDetector/download_yolov5.py
+
+#clear the pip cache to save close to 1G
+RUN pip3 cache purge
+RUN rm -r /root/.cache/pip
 
 WORKDIR /catDetector
 

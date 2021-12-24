@@ -30,7 +30,10 @@ class Target:
             sleep(0.001)
 
         # open the electrovalve and spray water
-        self.spray()
+        if variables.target_detected == True: #if a target was detected on two subsequent frames. Otherwise, just point a it but don't fire.
+            self.spray()
+        else:
+            variables.target_detected = True #next time the targeting function is called, it will fire.
 
         sleep(0.25) #make it faster #sleep(2) # wait a moment before going back to the stream analysis,
         # to avoid targeting again right away, as the servos tends to misbehave.
@@ -91,5 +94,6 @@ class Target:
         scanner.valve.on()
         sleep(0.5)
         scanner.valve.off()
+        variables.target_detected = False  #reset that variable
         #sleep(0.5)
         return
