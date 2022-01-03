@@ -12,7 +12,6 @@ Working version. The servo movement is somewhat erratic, I suspect the RPi Zero 
 A short video of activated device -- no cat was present at the time of the test, so I resorted to displaying a picture.
 
 <iframe width="871" height="490" src="https://www.youtube.com/embed/Aw9hs19DhJM" frameborder="0" allowfullscreen></iframe>
-</iframe>
 
 **DESCRIPTION**
 Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO model.
