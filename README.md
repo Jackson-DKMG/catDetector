@@ -11,7 +11,7 @@ Due to the new python packages required, the image size is 12-13G now.<br>
 Working version. The servo movement is somewhat erratic, I suspect the RPi Zero has a hard time keeping up with the instructions.
 A short video of activated device -- no cat was present at the time of the test, so I resorted to displaying a picture.
 
-<iframe width="400" height="400" src="https://www.youtube.com/embed/Aw9hs19DhJM">
+<iframe width="871" height="490" src="https://www.youtube.com/embed/Aw9hs19DhJM" frameborder="0" allowfullscreen></iframe>
 </iframe>
 
 **DESCRIPTION**
