@@ -7,6 +7,14 @@ The video can be displayed or not via a command line argument.<br>
 Due to the new python packages required, the image size is 12-13G now.<br>
 ***END UPDATE***
 
+***UPDATE JANUARY 3, 2022***
+Working version. The servo movement is somewhat erratic, I suspect the RPi Zero has a hard time keeping up with the instructions.
+A short video of activated device -- no cat was present at the time of the test, so I resorted to displaying a picture.
+
+<iframe width="400" height="400">
+src="https://www.youtube.com/embed/Aw9hs19DhJM">
+</iframe>
+
 **DESCRIPTION**
 Video stream is analyzed in real time by a laptop (for now) with a CUDA-capable device running a YOLO model.
 (The RPi has nowhere near enough processing power to handle this task - getting about 0.35 FPS. Maybe with a Coral TPU ?

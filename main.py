@@ -158,7 +158,7 @@ class Scan:
                     ###filter the objects pertaining to the relevant COCO classes (living stuff) and select the target with highest confidence
                     #TODO: remove class 0 ('person') for production
                     #print(results.xywh[0])
-                    targets = [i for i in results.xywh[0]if i[5] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
+                    targets = [i for i in results.xywh[0]if i[5] in [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]#[0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
 
                     #If nothing is detected, the above gives an empty list. No exception is raised.
                     if targets:
@@ -210,7 +210,10 @@ class Scan:
                 elapsed_time = time() - starting_time
                 fps = frame_id / elapsed_time
                 cv2.putText(frame, "FPS: " + str(round(fps, 2)), (10, 50), font, 2, (0, 0, 0), 3)
-                cv2.imshow("Image", frame)  # display the video stream and detected objects.
+                try:
+                    cv2.imshow("Image", frame)  # display the video stream and detected objects.
+                except: #sometimes there's an error on an image, just skip it.
+                    pass
 
                 key = cv2.waitKey(1)
                 if key == 27:
