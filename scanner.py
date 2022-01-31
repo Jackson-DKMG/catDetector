@@ -38,10 +38,10 @@ if len(Popen(["ssh", f"{variables.user}@{variables.ip}", "ps aux | grep pigpiod 
         exit(1)
 ### SETUP THE SERVOS ###
 factory = PiGPIOFactory(host=variables.ip)
-pan_servo = AngularServo(18, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
-                         max_angle=180, pin_factory=factory)
-tilt_servo = AngularServo(12, min_pulse_width=0.1, max_pulse_width=0.5, frame_width=20, min_angle=0,
-                          max_angle=180, pin_factory=factory)
+pan_servo = AngularServo(18, min_pulse_width=0.0006, max_pulse_width=0.0024, frame_width=0.02, min_angle=0, max_angle=180,
+                         initial_angle=20, pin_factory=factory)
+tilt_servo = AngularServo(12, min_pulse_width=0.0006, max_pulse_width=0.0024, frame_width=0.02, min_angle=0, max_angle=180,
+                          initial_angle=90, pin_factory=factory)
 ### SETUP THE VALVE ###
 #Note : this is actually a transistor, to control a relay, to control the electrovalve, which is powered by the mains supply.
 #the relay is powered by the 5V supply that also powers the servos. 
@@ -49,14 +49,15 @@ valve = OutputDevice(23, initial_value=False, pin_factory=factory)
 #valve.state = 0
 ########################
 
-pan_servo.angle = 20
-tilt_servo.angle = 90
+#pan_servo.angle = 20
+# sleep(5)
+#tilt_servo.angle = 90
 
 class PanCamera(Thread):
 
     def __init__(self):
         Thread.__init__(self)
-        tilt_servo.angle = 90 # set tilt_servo to default horizontal position
+        #tilt_servo.angle = 90 # set tilt_servo to default horizontal position
 
     def run(self):
         while True:
@@ -65,8 +66,13 @@ class PanCamera(Thread):
                     if variables.pan_is_running:
                         pan_servo.angle = i
                         variables.pan_servo_position = i
-                        #print(pan_servo.angle)
-                        sleep(1.5)
+                        #print('angle going right', pan_servo.angle)
+                        j = 0
+                        while not j == 40:
+                            sleep(0.05)
+                            if not variables.pan_is_running:
+                                exit(0)
+                            j += 1
                     else:
                         exit(0)
                 variables.pan_servo_going_right = True
@@ -75,8 +81,13 @@ class PanCamera(Thread):
                     if variables.pan_is_running:
                         pan_servo.angle = i
                         variables.pan_servo_position = i
-                        #print(pan_servo.angle)
-                        sleep(1.5)
+                        #print('angle going left', pan_servo.angle)
+                        j = 0
+                        while not j == 40:
+                            sleep(0.05)
+                            if not variables.pan_is_running:
+                                exit(0)
+                            j += 1
                     else:
                         exit(0)
                 variables.pan_servo_going_right = False
