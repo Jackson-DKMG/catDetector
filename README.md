@@ -4,6 +4,7 @@ An animal detector and repellent, using a camera mounted on a Raspberry Pi Zero 
 ***UPDATE MAY 2023***
 Updated to latest Yolo NAS model.
 Upgraded to Cuda 12.1 and Nvidia drivers 530.xx
+Upgraded to OpenCV 4.7.0
 Optimized the Dockerfile
 Docker needs to be on version 23.x or above otherwise the build fails when running the apt update command.
 Final image is pretty large with 16.5G.
@@ -73,3 +74,5 @@ The dockerfile ARG variables should be modified as necessary.
 
 If using Docker, the container can be run as follows (to display the video on the host):<br>
 <code>xhost + && docker run --name=catDetector --gpus all --rm -it --net=host --ipc=host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix cat_detector:v3 python3 main.py USER IP PORT --preview on/off (default off)</code>
+
+Port is typically 5888 in the above command (default pigpiod port)

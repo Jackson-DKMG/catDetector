@@ -1,0 +1,21 @@
+#rename that to Dockerfile and run the Docker build command (to push a small code update for example)
+#it adds a layer to the image, making it larger, so it's best to rebuild the image fully.
+
+FROM cat_detector:v4
+
+COPY main.py /catDetector/main.py
+COPY scanner.py /catDetector/scanner.py
+COPY target.py /catDetector/target.py
+COPY variables.py /catDetector/variables.py
+COPY download_yolov5.py /catDetector/download_yolo-nas_m.py
+
+RUN pip3 install --upgrade pip
+RUN pip3 install --upgrade numpy super_gradients
+
+#download the Yolo NAS model
+RUN python3 /catDetector/download_yolo-nas_m.py
+
+WORKDIR /catDetector
+
+#CMD python3 main.py
+#can't use that anymore as the user, ip & port must be passed as parameters
