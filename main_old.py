@@ -1,20 +1,16 @@
 import logging
-from super_gradients.training import models
-from super_gradients.common.object_names import Models
-#import torch
 import cv2
+import torch
 from queue import Queue  # needed to store the camera frames so as to always use the latest one
 from threading import Thread  # fill the queue in a background thread
 from time import sleep, time
 from subprocess import Popen, PIPE
-#from numpy import argmax
+from numpy import argmax
 from sys import exit as EXIT
 from os import chdir
 import target
 import variables
 import scanner
-
-
 
 logging.basicConfig(filename='detector.log', filemode='w',
                     format='%(asctime)s %(levelname)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S :', level=logging.DEBUG)
@@ -24,17 +20,10 @@ class Scan:
     def __init__(self):
         # instantiate the model
         chdir('data')
-        #self.model = torch.hub.load('ultralytics/yolov5', 'yolov5x6', pretrained=True) #already downloaded when building the docker image.
-        #DEVICE = 'cuda' if torch.cuda.is_available() else "CPU"
-        self.model = models.get(Models.YOLO_NAS_M, pretrained_weights="coco").to('cuda')
-        #self.model.conf = 0.70
-        self.model.eval()
-        self.model.prep_model_for_conversion(input_size=[1, 3, 1000, 1000])
-
+        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5x6', pretrained=True) #already downloaded when building the docker image.
+        self.model.conf = 0.70
         #otherwise, going to take some time, it's 269Mo.
         #self.model.eval()
-
-
         with open('coco.names', 'rt') as f:
             self.classes = f.read().rstrip('\n').split('\n')
         # set camera resolution.
@@ -165,36 +154,24 @@ class Scan:
             if variables.analysis_is_running:
                 try:
                     ### run each frame through the model.
-                    results = list(self.model.predict(frame, iou=0.2, conf=0.50)._images_prediction_lst)[0] #a tensor with all the detected objects as arrays (coords, class)
+                    results = self.model(frame) #a tensor with all the detected objects as arrays (coords, class)
                     ###filter the objects pertaining to the relevant COCO classes (living stuff) and select the target with highest confidence
                     #TODO: remove class 0 ('person') for production
                     #print(results.xywh[0])
-                    #targets = [i for i in results.xywh[0]if i[5] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]#[0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
-
-                    targets = []
-                    for i in range(len(results.prediction.labels)):
-                        if results.prediction.labels[i] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]:
-                            targets.append([results.prediction.labels[i], results.prediction.confidence[i], results.prediction.bboxes_xyxy[i]])
+                    targets = [i for i in results.xywh[0]if i[5] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]#[0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
 
                     #If nothing is detected, the above gives an empty list. No exception is raised.
-
                     if targets:
-                        main_target = [i for i in targets if i[0] == 15] #look for a cat.
-                        if not main_target: #if no cat, pick the target with highest confidence. results are already ordered by decreasing confidence. Index 0 is always the right one
-                            main_target = [targets[0]]
+                        main_target = targets[0] #results are already ordered by decreasing confidence. Index 0 is always the right one
                         #print(self.classes[int(main_target[5].item())], str(round(main_target[4].item(), 2)))
                         #get center coordinates
-                        #x,y = round(main_target[0].item()), round(main_target[1].item())
+                        x,y = round(main_target[0].item()), round(main_target[1].item())
 
-                        x, y = round((main_target[0][2][2] + main_target[0][2][0]) / 2), round((main_target[0][2][3] + main_target[0][2][1]) / 2)
-                        #print(x,y)
                         if variables.preview == 'on': #below block not executed if the live video isn't displayed
-                            #cv2.putText(frame, self.classes[int(main_target[5].item())] + " " + str(round(main_target[4].item(), 2)),
-                            #            (x,y + 30), font, 2, (0, 255, 0), 3)
+                            cv2.putText(frame, self.classes[int(main_target[5].item())] + " " + str(round(main_target[4].item(), 2)),
+                                        (x,y + 30), font, 2, (0, 255, 0), 3)
                             # display a dot at the center of the detected object.
-                            #cv2.rectangle(frame,(int(targets[0][2][0]), int(targets[0][2][1])), (int(targets[0][2][2]), int(targets[0][2][3])), color=(0, 0, 255), thickness=1)
-                            cv2.circle(frame, (x,y), radius=5, color=(0, 0, 255), thickness=-1),
-
+                            cv2.circle(frame, (x,y), radius=5, color=(0, 0, 255), thickness=-1)
                             ######################################
                         variables.pan_is_running = False  # stop the pan routine and break the analysis loop,
                         variables.analysis_is_running = False  # as something was detected.
@@ -203,7 +180,7 @@ class Scan:
                         variables.tilt_servo_position = scanner.tilt_servo.angle
                         variables.pan_servo_position = scanner.pan_servo.angle
                         Thread(target=target.Target(x,y).run).start()
-                        break  # can't target multiple objects at once, so.
+                        #break  # can't target multiple objects at once, so.
 
                     else:
                         variables.target_detected = False

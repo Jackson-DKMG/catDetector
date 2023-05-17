@@ -1,12 +1,12 @@
-FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
 
-ARG OPENCV_VERSION=4.5.4
+ARG OPENCV_VERSION=4.7.0
 ARG CUDA_COMPUTE_CAPABILITY=7.5
-ARG LIBCUDNN=libcudnn8_8.2.2.26-1+cuda11.4_amd64.deb
-ARG LIBCUDNNDEV=libcudnn8-dev_8.2.2.26-1+cuda11.4_amd64.deb
+ARG LIBCUDNN=libcudnn8_8.9.1.23-1+cuda12.1_amd64.deb
+ARG LIBCUDNNDEV=libcudnn8-dev_8.9.1.23-1+cuda12.1_amd64.deb
 
 #need that repo to install libjasper-dev
 RUN echo "deb http://security.ubuntu.com/ubuntu xenial-security main" >> /etc/apt/sources.list
@@ -32,7 +32,7 @@ COPY main.py /catDetector/main.py
 COPY scanner.py /catDetector/scanner.py
 COPY target.py /catDetector/target.py
 COPY variables.py /catDetector/variables.py
-COPY download_yolov5.py /catDetector/download_yolov5.py
+COPY download_yolo-nas_m.py /catDetector/download_yolo-nas_m.py
 
 COPY $LIBCUDNN /$LIBCUDNN
 COPY $LIBCUDNNDEV /$LIBCUDNNDEV
@@ -42,7 +42,7 @@ RUN rm $LIBCUDNN $LIBCUDNNDEV
 
 #install needed python modules and dependencies
 RUN pip3 install --upgrade pip
-RUN pip3 install --upgrade numpy gpiozero pigpio pandas seaborn torch matplotlib Pillow PyYAML requests scipy torchvision tqdm tensorboard thop
+RUN pip3 install --upgrade numpy gpiozero pigpio pandas seaborn matplotlib Pillow PyYAML requests scipy tqdm tensorboard thop #torch torchvision
 
 #download & unzip opencv and opencv-contrib, then delete the archives.
 RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
@@ -98,8 +98,8 @@ RUN wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
     # Remove OpenCV sources and build folder
     cd / && rm -rf opencv-${OPENCV_VERSION} && rm -rf opencv_contrib-${OPENCV_VERSION}
 
-#download the YoloV5 model
-RUN python3 /catDetector/download_yolov5.py
+#download the Yolo NAS model
+RUN python3 /catDetector/download_yolo-nas_m.py
 
 #clear the pip cache to save close to 1G
 RUN pip3 cache purge

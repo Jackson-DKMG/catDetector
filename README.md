@@ -1,6 +1,13 @@
 **PRODUCTION READY**
 An animal detector and repellent, using a camera mounted on a Raspberry Pi Zero W and a couple servos.
 <br><br>
+***UPDATE MAY 2023***
+Updated to latest Yolo NAS model.
+Upgraded to Cuda 12.1 and Nvidia drivers 530.xx
+Optimized the Dockerfile
+Docker needs to be on version 23.x or above otherwise the build fails when running the apt update command.
+Final image is pretty large with 16.5G.
+
 ***UPDATE DECEMBER 7***
 Switched to Pytorch and YOLOV5, which has a better performance and is a lot easier to configure.<br>
 The video can be displayed or not via a command line argument.<br>
@@ -47,14 +54,18 @@ The version I'm using is https://github.com/AlexeyAB/darknet/releases/download/d
 
 UPDATE: model is yolov5x6. If using the docker version, the model is downloaded when building the image.
 
+UPDATE2: model is now Yolo NAS from super_gradients
+
 **DOCKERFILE**
+
+***must install nvidia-container-toolkit to use the gpu when running the image***, in addition to cuda and the display drivers on the host.
 
 It's easier to run the program inside a docker container, built with a Cuda-capable OpenCV. The image is pretty heavy essentially because of the cuda & cudnn libraries.<br>
 Anyway, it's also a base for building other Deep Learning/Machine Learning images.<br>
 The dockerfile installs all the dependencies. In the same folder, there must be :<br>
     -the libcudnn .deb packages (to download from https://developer.nvidia.com/rdp/cudnn-download). They're the following:<br>
-        cuDNN Runtime Library for Ubuntu20.04 x86_64 (Deb)<br>
-        cuDNN Developer Library for Ubuntu20.04 x86_64 (Deb)<br>
+        cuDNN Runtime Library for Ubuntu22.04 x86_64 (Deb)<br>
+        cuDNN Developer Library for Ubuntu22.04 x86_64 (Deb)<br>
     -a ssh folder containing an id_rsa and known_hosts for ssh'ing into the RPi without a prompt.<br>
     -the program files.
 
