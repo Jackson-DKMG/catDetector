@@ -173,7 +173,7 @@ class Scan:
 
                     targets = []
                     for i in range(len(results.prediction.labels)):
-                        if results.prediction.labels[i] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]:
+                        if results.prediction.labels[i] in [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]:
                             targets.append([results.prediction.labels[i], results.prediction.confidence[i], results.prediction.bboxes_xyxy[i]])
 
                     #If nothing is detected, the above gives an empty list. No exception is raised.
