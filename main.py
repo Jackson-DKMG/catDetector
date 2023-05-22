@@ -173,7 +173,7 @@ class Scan:
 
                     targets = []
                     for i in range(len(results.prediction.labels)):
-                        if results.prediction.labels[i] in [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]:
+                        if results.prediction.labels[i] in [0, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]:
                             targets.append([results.prediction.labels[i], results.prediction.confidence[i], results.prediction.bboxes_xyxy[i]])
 
                     #If nothing is detected, the above gives an empty list. No exception is raised.
@@ -187,7 +187,6 @@ class Scan:
                         #x,y = round(main_target[0].item()), round(main_target[1].item())
 
                         x, y = round((main_target[0][2][2] + main_target[0][2][0]) / 2), round((main_target[0][2][3] + main_target[0][2][1]) / 2)
-                        #print(x,y)
                         if variables.preview == 'on': #below block not executed if the live video isn't displayed
                             #cv2.putText(frame, self.classes[int(main_target[5].item())] + " " + str(round(main_target[4].item(), 2)),
                             #            (x,y + 30), font, 2, (0, 255, 0), 3)
@@ -203,7 +202,7 @@ class Scan:
                         variables.tilt_servo_position = scanner.tilt_servo.angle
                         variables.pan_servo_position = scanner.pan_servo.angle
                         Thread(target=target.Target(x,y).run).start()
-                        break  # can't target multiple objects at once, so.
+                        #break  # can't target multiple objects at once, so.
 
                     else:
                         variables.target_detected = False
